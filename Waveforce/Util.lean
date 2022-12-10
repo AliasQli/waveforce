@@ -1,7 +1,8 @@
 import Lean.Data.Json
 import Std.Data.Option.Basic
+import Init.System.FilePath
 
-open Lean Functor
+open Lean Functor System
 
 namespace V2ray
 
@@ -73,3 +74,8 @@ def liftToIO : Except String a → IO a
   | ok a => pure a
 
 end Except
+
+def IO.FS.createAndWrite (path : FilePath) (s : String) : IO Unit := do
+  if let some p := path.parent
+    then createDirAll p
+  writeFile path s

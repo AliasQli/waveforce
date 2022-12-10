@@ -1,5 +1,6 @@
 import Waveforce.Util
 import Waveforce.Base64
+import Waveforce.Paths
 import Waveforce.V2ray.Protocol
 import Waveforce.V2ray.StreamSettings
 
@@ -14,14 +15,16 @@ structure Server where
   deriving Repr
 
 instance : ToJson Server where
-  toJson servers := mergeObj (toJson servers.protocol) (toJson servers.stream)
+  toJson server := mergeObj (toJson server.protocol) $ mkObj $ 
+    [⟨"streamSettings", toJson server.stream⟩] ++
+    opt "name" server.name
 
 instance : FromJson Server where
   fromJson? obj := do
     pure
-      { name := none
+      { name := (obj.getObjValAs? String "name").toOption
       , protocol := (← fromJson? obj)
-      , stream := (← fromJson? obj)
+      , stream := (← obj.getObjValAs? V2ray.StreamSettings "streamSettings")
       }
 
 instance : FromJsonURI Server where
@@ -35,9 +38,12 @@ instance : FromJsonURI Server where
 def fromBase64URI? (uri : String) : Except String Server := do
   let ss := uri.splitOn "://"
   if ss.length != 2 then throw "Malformed URI."
-  let scheme := ss.get! 0
+  let scheme := ss[0]!
   let obj ← parse (ss.get! 1).decodeBase64
   fromJsonURI? scheme obj
+
+-- TODO
+def Server.toConfigString (server : Server) : String := ((toJson server).compress.drop 1).dropRight 1
 
 namespace Template
 
@@ -98,22 +104,20 @@ instance : Inhabited Template where
   }
 }"
 
-def templatePath : FilePath := "~/.config/waveforce/template.json.st"
-
 def renderTo (s : String) (path : FilePath) : IO Unit := do
   let ⟨template⟩ ←
     try
-      map Template.mk (IO.FS.readFile templatePath)
+      map Template.mk (IO.FS.readFile Paths.templatePath)
     catch _ =>
-      IO.FS.writeFile templatePath default
-      pure default
-  IO.FS.writeFile path (template.replace "%s" s)
+      let ret := default
+      IO.FS.createAndWrite Paths.templatePath ret.toString
+      pure ret
+  IO.FS.createAndWrite path (template.replace "%s" s)
 
 end Template
 
-def defaultConfigPath : FilePath := "~/.config/waveforce/cache/config.json"
 
-def Server.render (s : Server) (path : optParam FilePath defaultConfigPath) := 
-  Template.renderTo (toJson s).pretty path
+def Server.render (s : Server) (path : optParam FilePath Paths.v2rayConfigPath) := 
+  Template.renderTo s.toConfigString path
 
 end V2ray
