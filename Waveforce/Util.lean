@@ -58,9 +58,18 @@ instance : FromJson StringNat where
       let s ← fromJson? (α := String) o
       s.toNat?.elim (throw s!"Can't parse {s} as a number.") pure
 
-open Except in
+end V2ray
+
+namespace Except
+
 instance [BEq a] [BEq b] : BEq (Except a b) where
   beq
     | ok a, ok b => a == b
     | error a, error b => a == b
     | _, _ => false
+
+def liftToIO : Except String a → IO a
+  | error s => throw (IO.userError s)
+  | ok a => pure a
+
+end Except

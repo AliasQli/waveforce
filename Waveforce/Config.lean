@@ -6,7 +6,7 @@ import Init.System.IO
 open Lean Json System Functor
 
 structure Config where
-  servers : Array V2ray.Settings
+  servers : Array V2ray.Server
   path : Option FilePath
 
 namespace Config
@@ -25,21 +25,21 @@ instance : ToJson Config where
 instance : FromJson Config where
   fromJson? obj := do
     pure
-      { servers := (← obj.getObjValAs? (Array V2ray.Settings) "servers")
+      { servers := (← obj.getObjValAs? (Array V2ray.Server) "servers")
       , path := (obj.getObjValAs? String "path").toOption
       }
 
 def getPath (config : Config) : FilePath := config.path.getD "v2ray"
 
-def setPath (config : Config) (p : FilePath) : Config := 
-  {config with path := if p = "" then none else p}
+def setPath (p : FilePath) (config : Config) : Config := 
+  {config with path := if p == "" then none else p}
 
-def findServerIx (config : Config) (name : String) : Option Nat := 
+def findServerIx (name : String) (config : Config) : Option Nat := 
   config.servers.findIdx? (fun o => o.name == some name)
 
-def getServer (config : Config) (i : Nat) : Option V2ray.Settings := config.servers[i]?
+def getServer (i : Nat) (config : Config) : Option V2ray.Server := config.servers[i]?
 
-def renameServer (config : Config) (i : Nat) (name : Option String) : Option Config :=
+def renameServer (i : Nat) (config : Config) (name : Option String) : Option Config :=
   if i < config.servers.size
     then some
         { config with servers[i].name := name }
@@ -52,10 +52,14 @@ def read : IO Config := do
             IO.FS.readFile configPath
           catch _ => 
             return default
-  match do fromJson? (← parse s) with
-    | Except.error e => throw (IO.userError e)
-    | Except.ok c => pure c
+  (do fromJson? (← parse s)).liftToIO
 
 def write (config : Config) : IO Unit := IO.FS.writeFile configPath (toJson config).pretty
+
+def modify (f : Config → Config) : IO Unit := do
+  write (f (← read))
+
+def use (f : Config → IO a) : IO a := do 
+  f (← read)
 
 end Config

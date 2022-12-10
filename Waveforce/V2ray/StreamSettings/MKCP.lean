@@ -12,14 +12,15 @@ inductive HeaderType where
   | wechatVideo
   | dtls
   | wireguard
+  deriving Repr
 
 instance : Inhabited HeaderType where
   default := HeaderType.none
 
 open HeaderType
 
-instance : Repr HeaderType where
-  reprPrec h _ := match h with
+instance : ToString HeaderType where
+  toString
     | HeaderType.none => "none"
     | srtp => "srtp"
     | utp => "utp"
@@ -28,7 +29,7 @@ instance : Repr HeaderType where
     | wireguard => "wireguard"
 
 instance : ToJson HeaderType where
-  toJson := Json.str ∘ reprStr
+  toJson := Json.str ∘ toString
 
 instance : FromJson HeaderType where
   fromJson?
@@ -38,7 +39,7 @@ instance : FromJson HeaderType where
     | str "wechat-video" => pure wechatVideo
     | str "dtls" => pure dtls
     | str "wireguard" => pure wireguard
-    | _          => throw s!"Expected a string in {reprStr all}."
+    | _          => throw s!"Expected a string in {all}."
       where all := [HeaderType.none, srtp, utp, wechatVideo, dtls, wireguard]
 
 end MKCP

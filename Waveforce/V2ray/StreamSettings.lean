@@ -35,7 +35,7 @@ instance : FromJsonURI TLSSettings where
 
 end TLSSettings
 
-/-- Network *and* corresponding settings -/
+/-- Network *and* corresponding servers -/
 inductive Network where
   | mKCP : MKCP → Network
   deriving Repr

@@ -11,21 +11,22 @@ inductive Security where
   | chacha20poly1305
   | auto
   | none
+  deriving Repr
 
 instance : Inhabited Security where
   default := Security.auto
 
 open Security
 
-instance : Repr Security where
-  reprPrec s _ := match s with
+instance : ToString Security where
+  toString s := match s with
     | aes128gcm         => "aes-128-gcm"
     | chacha20poly1305  => "chacha20-poly1305"
     | auto              => "auto"
     | Security.none     => "none"
 
 instance : ToJson Security where
-  toJson := str ∘ reprStr
+  toJson := str ∘ toString
 
 instance : FromJson Security where
   fromJson?
@@ -33,7 +34,7 @@ instance : FromJson Security where
     | str "chacha20-poly1305" => pure chacha20poly1305
     | str "auto" => pure auto
     | str "none" => pure Security.none
-    | _          => throw s!"Expected a string in {reprStr all}."
+    | _          => throw s!"Expected a string in {all}."
       where all := [aes128gcm, chacha20poly1305, auto, Security.none]
 end Vmess
 
