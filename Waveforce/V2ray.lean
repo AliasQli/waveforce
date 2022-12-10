@@ -1,15 +1,17 @@
+import Waveforce.Util
+import Waveforce.Base64
 import Waveforce.V2ray.Protocol
 import Waveforce.V2ray.StreamSettings
-import Waveforce.V2ray.Util
-import Waveforce.Base64
+
 open Lean Json Functor
 
+namespace V2ray
+
 structure Settings where
+  name : Option String
   protocol : V2ray.Protocol
   stream : V2ray.StreamSettings
   deriving Repr
-
-namespace V2ray
 
 instance : ToJson Settings where
   toJson settings := mergeObj (toJson settings.protocol) (toJson settings.stream)
@@ -17,14 +19,16 @@ instance : ToJson Settings where
 instance : FromJson Settings where
   fromJson? obj := do
     pure
-      { protocol := (← fromJson? obj)
+      { name := none
+      , protocol := (← fromJson? obj)
       , stream := (← fromJson? obj)
       }
 
 instance : FromJsonURI Settings where
   fromJsonURI? scheme obj := do
     pure
-      { protocol := (← fromJsonURI? scheme obj)
+      { name := (obj.getObjValAs? String "ps").toOption
+      , protocol := (← fromJsonURI? scheme obj)
       , stream := (← fromJsonURI? scheme obj)
       }
 

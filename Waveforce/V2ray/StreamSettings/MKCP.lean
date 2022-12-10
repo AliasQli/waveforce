@@ -1,4 +1,5 @@
-import Waveforce.V2ray.Util
+import Waveforce.Util
+
 open Lean Json Functor
 
 namespace V2ray.StreamSettings

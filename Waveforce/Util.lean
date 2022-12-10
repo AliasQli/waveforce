@@ -10,9 +10,6 @@ class FromJsonURI (α : Type u) where
 
 export FromJsonURI (fromJsonURI?)
 
--- instance : CoeTail (Except a b) (Option b) where
---   coe := Except.toOption
-
 instance : ToJson UInt8 where
   toJson := toJson ∘ UInt8.toNat
 

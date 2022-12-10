@@ -1,4 +1,5 @@
-import Waveforce.V2ray.Util
+import Waveforce.Util
+
 open Lean Option Functor Json
 
 namespace V2ray.Protocol

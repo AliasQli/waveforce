@@ -1,5 +1,5 @@
-import Waveforce.V2ray.Util
 import Waveforce.V2ray.StreamSettings.MKCP
+import Waveforce.Util
 
 open Lean Json Functor Except
 
