@@ -66,7 +66,7 @@ instance : ToJson MKCP where
     opt "congestion" mkcp.congestion ++
     opt "readBufferSize" mkcp.readBufferSize ++
     opt "writeBufferSize" mkcp.writeBufferSize ++
-    map (⟨"header", mkObj [⟨"type", toJson ·⟩]⟩) mkcp.headerType.toList
+    mkcp.headerType.toList.map (⟨"header", mkObj [⟨"type", toJson ·⟩]⟩)
 
 instance : FromJson MKCP where
   fromJson? obj :=

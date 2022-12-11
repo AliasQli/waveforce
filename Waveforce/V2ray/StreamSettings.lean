@@ -1,4 +1,7 @@
 import Waveforce.V2ray.StreamSettings.MKCP
+import Waveforce.V2ray.StreamSettings.WebSocket
+import Waveforce.V2ray.StreamSettings.TCP
+import Waveforce.V2ray.StreamSettings.HTTP2
 import Waveforce.Util
 
 open Lean Json Functor Except
@@ -37,29 +40,52 @@ end TLSSettings
 
 /-- Network *and* corresponding servers -/
 inductive Network where
+  | tcp : TCP → Network
   | mKCP : MKCP → Network
+  | websocket : WebSocket → Network
+  | http2 : HTTP2 → Network
   deriving Repr
 
 namespace Network
 
+def allOptions := ["tcp", "kcp", "ws", "http"]
+
 instance : ToJson Network where
   toJson
+    | tcp t => mkObj
+      [ ⟨"network", str "tcp"⟩
+      , ⟨"tcpSettings", toJson t⟩
+      ]
     | mKCP mkcp => mkObj
       [ ⟨"network", str "kcp"⟩
       , ⟨"kcpSettings", toJson mkcp⟩
+      ]
+    | websocket ws => mkObj
+      [ ⟨"network", str "ws"⟩
+      , ⟨"wsSettings", toJson ws⟩
+      ]
+    | http2 h2 => mkObj
+      [ ⟨"network", str "http"⟩
+      , ⟨"httpSettings", toJson h2⟩
       ]
 
 instance : FromJson Network where
   fromJson? obj := do
     match (← obj.getObjValAs? String "network") with
-      | "kcp" => map mKCP $ fromJson? (← obj.getObjVal? "kcpSettings")
-      | s => throw s!"Unrecognized network type {s}."
+      | "tcp" => (fromJson? (← obj.getObjVal? "tcpSettings")).map tcp
+      | "kcp" => (fromJson? (← obj.getObjVal? "kcpSettings")).map mKCP
+      | "ws" => (fromJson? (← obj.getObjVal? "wsSettings")).map websocket
+      | "http" => (fromJson? (← obj.getObjVal? "httpSettings")).map http2
+      | s => throw s!"Unrecognized network type {s}, expected one of {allOptions}."
 
 instance : FromJsonURI Network where
   fromJsonURI? scheme params := do
     match (← params.getObjValAs? String "net") with
-      | "kcp" => map mKCP $ fromJsonURI? scheme params
-      | s => throw s!"Unrecognized network type {s}."
+      | "tcp" => (fromJsonURI? scheme params).map tcp
+      | "kcp" => (fromJsonURI? scheme params).map mKCP
+      | "ws" => (fromJsonURI? scheme params).map websocket
+      | "http" => (fromJsonURI? scheme params).map http2
+      | s => throw s!"Unrecognized network type {s}, expected one of {allOptions}."
 
 end Network
 

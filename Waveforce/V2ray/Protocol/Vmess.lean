@@ -53,11 +53,11 @@ namespace Vmess
 
 instance : ToJson Vmess where
   toJson vmess := mkObj
-    [ ⟨"address", toJson vmess.address⟩
-    , ⟨"port",    toJson vmess.port.toNat⟩
+    [ ⟨"address", vmess.address⟩
+    , ⟨"port",    vmess.port.toNat⟩
     , ⟨"users",   arr #[mkObj $
-        [ ⟨"id",    toJson vmess.id⟩ 
-        , ⟨"level", toJson vmess.level.toNat⟩
+        [ ⟨"id",    vmess.id⟩ 
+        , ⟨"level", vmess.level.toNat⟩
         ] ++
         opt "alterId" vmess.alterId ++
         opt "security" vmess.security
