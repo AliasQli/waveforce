@@ -32,18 +32,15 @@ instance : FromJson Config where
 
 def getPath (config : Config) : FilePath := config.path.getD "v2ray"
 
-/-- Better to return `Option (i : Nat × i < i < c.servers.size)` -/ 
-def findServerIx (s : String) (c : Config) : Option Nat := do
+def findServerIx (s : String) (c : Config) : Option (Fin c.servers.size) := do
   if let some i := s.toNat? then 
-    if i < c.servers.size
-      then return i
-  c.servers.findIdx? (fun server => server.name == s)
+    if h : i < c.servers.size then
+      return ⟨i, h⟩
+  c.servers.findFinIdx? (fun server => server.name == s)
 
 def findServer (s : String) (c : Config) : Option V2ray.Server := do
-  if let some i := s.toNat? then 
-    if h : i < c.servers.size
-      then return c.servers[i]
-  c.servers.find? (fun server => server.name == s)
+  let i ← findServerIx s c
+  pure c.servers[i]
 
 def read : IO Config := do
   let s ← try

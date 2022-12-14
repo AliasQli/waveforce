@@ -1,6 +1,7 @@
 import Lean.Data.Json
 import Std.Data.Option.Basic
 import Init.System.FilePath
+import Mathlib.Data.Option.Basic
 
 open Lean Functor System
 
@@ -79,3 +80,34 @@ def IO.FS.createAndWrite (path : FilePath) (s : String) : IO Unit := do
   if let some p := path.parent
     then createDirAll p
   writeFile path s
+
+theorem Array.findIdx?_res_lt_size (as : Array α) (p : α → Bool) : 
+    as.findIdx? p = some n → n < as.size := by
+  let rec prf (i : Nat) (j : Nat) (inv : i + j = as.size) : 
+      Array.findIdx?.loop as p i j inv = some n → n < as.size := by
+    intro h
+    rw [Array.findIdx?.loop] at h
+    split at h
+    case inl hlt =>
+      split at h
+      case h_1 inv =>
+        rw [Nat.zero_add] at inv
+        rw [inv] at hlt
+        exact absurd hlt (Nat.lt_irrefl _)
+      case h_2 i inv =>
+        split at h
+        case inl =>
+          rw [← Option.some_injective Nat h]
+          exact hlt
+        case inr =>
+          have : i + (j + 1) = as.size := by
+            rw [← inv, Nat.add_comm j 1, Nat.add_assoc]
+          exact prf i (j + 1) this h
+    case inr => contradiction
+  rw [Array.findIdx?]
+  exact prf as.size 0 rfl
+
+def Array.findFinIdx? (as : Array α) (p : α → Bool) : Option (Fin as.size) := 
+  match h : as.findIdx? p with
+    | none => none
+    | some i => some ⟨i, Array.findIdx?_res_lt_size as p h⟩
