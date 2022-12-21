@@ -1,6 +1,6 @@
 import Waveforce.Util
 
-open Lean Json Functor
+open Lean Json
 
 namespace V2ray.StreamSettings
 

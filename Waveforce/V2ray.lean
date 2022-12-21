@@ -4,7 +4,7 @@ import Waveforce.Paths
 import Waveforce.V2ray.Protocol
 import Waveforce.V2ray.StreamSettings
 
-open Lean Json Functor System
+open Lean Json System
 
 namespace V2ray
 
@@ -107,7 +107,7 @@ instance : Inhabited Template where
 def renderTo (s : String) (path : FilePath) : IO Unit := do
   let ⟨template⟩ ←
     try
-      map Template.mk (IO.FS.readFile Paths.templatePath)
+      (IO.FS.readFile Paths.templatePath).map Template.mk
     catch _ =>
       let ret := default
       IO.FS.createAndWrite Paths.templatePath ret.toString

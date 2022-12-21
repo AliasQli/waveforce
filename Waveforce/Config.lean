@@ -4,7 +4,7 @@ import Waveforce.Paths
 import Init.System.FilePath
 import Init.System.IO
 
-open Lean Json System Functor
+open Lean Json System
 
 structure Config where
   servers : Array V2ray.Server

@@ -4,7 +4,7 @@ import Waveforce.V2ray.StreamSettings.TCP
 import Waveforce.V2ray.StreamSettings.HTTP2
 import Waveforce.Util
 
-open Lean Json Functor Except
+open Lean Json Except
 
 namespace V2ray
 

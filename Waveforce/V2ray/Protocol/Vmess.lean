@@ -1,6 +1,6 @@
 import Waveforce.Util
 
-open Lean Option Functor Json
+open Lean Option Json
 
 namespace V2ray.Protocol
 
@@ -72,7 +72,7 @@ instance : FromJson Vmess where
       { address  := (← obj.getObjValAs? String "address")
       , port     := (← obj.getObjValAs? StringNat "port").toUInt16
       , id       := (← user.getObjValAs? String "id")
-      , alterId  := map Nat.toUInt16 (user.getObjValAs? StringNat "alterId").toOption
+      , alterId  := (user.getObjValAs? StringNat "alterId").toOption.map Nat.toUInt16
       , level    := (← try user.getObjValAs? Nat "level" catch _ => pure 8).toUInt32
       , security := (user.getObjValAs? Security "security").toOption
       }
@@ -83,7 +83,7 @@ instance : FromJsonURI Vmess where
       { address  := (← params.getObjValAs? String "add")
       , port     := (← params.getObjValAs? StringNat "port").toUInt16
       , id       := (← params.getObjValAs? String "id")
-      , alterId  := map Nat.toUInt16 (params.getObjValAs? StringNat "aid").toOption
+      , alterId  := (params.getObjValAs? StringNat "aid").toOption.map Nat.toUInt16
       , level    := 8
       , security := (params.getObjValAs? Security "security" <|> params.getObjValAs? Security "scy").toOption
       }

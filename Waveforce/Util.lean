@@ -3,7 +3,7 @@ import Std.Data.Option.Basic
 import Init.System.FilePath
 import Mathlib.Data.Option.Basic
 
-open Lean Functor System
+open Lean System
 
 namespace V2ray
 
