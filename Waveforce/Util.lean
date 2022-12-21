@@ -70,16 +70,57 @@ instance [BEq a] [BEq b] : BEq (Except a b) where
     | error a, error b => a == b
     | _, _ => false
 
-def liftToIO : Except String a → IO a
-  | error s => throw (IO.userError s)
-  | ok a => pure a
-
 end Except
 
-def IO.FS.createAndWrite (path : FilePath) (s : String) : IO Unit := do
+unsafe def undefined : α :=
+  match unsafeIO (IO.Process.exit 114514) with
+  | Except.ok x => x
+  | Except.error _ => undefined -- Impossible!
+
+unsafe def IO.lazy' (m : IO a) : IO (Thunk a) := pure $ Thunk.mk fun _ => 
+  match unsafeIO m with
+    | Except.ok x => x
+    | Except.error e => @panic a ⟨undefined⟩ e.toString
+
+@[implemented_by IO.lazy']
+def IO.lazy (m : IO a) : IO (Thunk a) := m.map (Thunk.mk ∘ (fun _ => ·))
+
+def compareFilePath (p q : FilePath) : Ordering :=
+  compare p.normalize.toString q.normalize.toString
+
+unsafe def fileReadRecord : IO.Ref (RBMap FilePath String compareFilePath) :=
+  unsafeBaseIO (IO.mkRef RBMap.empty)
+
+namespace IO.FS
+
+unsafe def trackRead' (p : FilePath) : IO String := do
+  match (← fileReadRecord.get).find? p with
+    | some s => pure s
+    | none   => do
+        let s ← readFile p
+        fileReadRecord.modify (fun m => m.insert p s)
+        pure s
+
+@[implemented_by trackRead']
+def trackRead (p : FilePath) : IO String := readFile p
+
+def createAndWrite (path : FilePath) (s : String) : IO Unit := do
   if let some p := path.parent
     then createDirAll p
   writeFile path s
+
+unsafe def writeBack' (p : FilePath) (t : Thunk (Option String)) : IO Unit := do
+  if (← fileReadRecord.get).contains p then
+    if let some s := t.get then
+      createAndWrite p s
+      fileReadRecord.modify (fun m => m.insert p s)
+
+@[implemented_by writeBack']
+def writeBack (p : FilePath) (t : Thunk (Option String)) : IO Unit := do
+  if let some s := t.get then
+      createAndWrite p s
+
+end IO.FS
 
 theorem Array.findIdx?_res_lt_size (as : Array α) (p : α → Bool) : 
     as.findIdx? p = some n → n < as.size := by

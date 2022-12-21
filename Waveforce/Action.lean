@@ -7,7 +7,7 @@ def setV2rayPath (p : String) : IO Unit :=
   Config.modify $ pure ∘ fun c => {c with path := if p == "" then none else p}
 
 def addServer (uri : String) : IO Unit := do
-  let servers ← (V2ray.fromBase64URI? uri).liftToIO
+  let servers ← IO.ofExcept (V2ray.fromBase64URI? uri)
   Config.modify $ pure ∘ fun c => {c with servers := c.servers.push servers}
 
 def listServers : IO Unit := Config.use fun c => do
