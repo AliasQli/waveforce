@@ -44,17 +44,21 @@ end Subscripted
 end Subscription
 
 structure Subscription where
+  name : String
   url : String
   subscripted : Thunk (Option Subscription.Subscripted)
 
 open Std.Format in
 instance : Repr Subscription where
   reprPrec sub _ := 
-    "{ url := " ++ text sub.url ++ "subscripted := ... }"
+    "{ name := " ++ text sub.name ++ ", url := " ++ text sub.url ++ "subscripted := ... }"
 
 instance : ToJson Subscription where
-  toJson sub := toJson (sub.url)
+  toJson sub := mkObj 
+    [ ⟨"name", str sub.name⟩ 
+    , ⟨"url", str sub.url⟩
+    ]
 
 instance : FromJson Subscription where
   fromJson? obj := do
-    pure ⟨(← fromJson? obj), Thunk.pure none⟩
+    pure ⟨(← obj.getObjValAs? String "name"), (← obj.getObjValAs? String "url"), Thunk.pure none⟩

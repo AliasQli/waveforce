@@ -30,8 +30,8 @@ instance : ToJson Config where
 instance : FromJson Config where
   fromJson? obj := do
     pure
-      { servers := (← obj.getObjValAs? (Array V2ray.Server) "servers")
-      , subscriptions := (← obj.getObjValAs? (Array V2ray.Subscription) "subscriptions")
+      { servers := (obj.getObjValAs? (Array V2ray.Server) "servers").toOption.getD #[]
+      , subscriptions := (obj.getObjValAs? (Array V2ray.Subscription) "subscriptions").toOption.getD #[]
       , path := (obj.getObjValAs? String "path").toOption
       }
 
@@ -55,7 +55,7 @@ def read : IO Config := do
   let mut config : Config ← IO.ofExcept (do fromJson? (← parse s))
   for ⟨sub, i⟩ in config.subscriptions.zipWithIndex do
     let path := Paths.subCachePath sub.url
-    let subed ← IO.lazy $ do
+    let subed ← IO.lazy do
       let s ← try
               IO.FS.trackRead path
             catch _ => return none
