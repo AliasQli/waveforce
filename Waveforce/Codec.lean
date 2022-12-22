@@ -1,8 +1,9 @@
 import Init.Data.String.Basic
 
-namespace Base64
+namespace Base64URI
 
-def base64Str := "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+-- This is actually Base64URI.
+def base64Str := "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"
 
 def decodeTable : Array UInt32 := Id.run do
   let mut arr := mkArray 128 0
@@ -56,13 +57,40 @@ def encode (r : String) : String := Id.run do
       n := 0
   pure $ s.dropRight pad ++ (List.replicate pad '=').asString
 
-def decodeFileName : String → String := Base64.decode ∘ (fun s => s.replace "_" "/")
+end Base64URI
 
-def encodeFileName : String → String := (fun s => s.replace "/" "_") ∘ Base64.encode
+namespace Html
 
-end Base64
+def hexChar (c : Char) : Except String UInt8 :=
+  if '0' ≤ c ∧ c ≤ '9' then 
+    pure $ c.val.toNat.toUInt8 - '0'.val.toNat.toUInt8 
+  else if 'a' ≤ c ∧ c ≤ 'f' then 
+    pure $ c.val.toNat.toUInt8 - 'a'.val.toNat.toUInt8 + 10 
+  else if 'A' ≤ c ∧ c ≤ 'F' then 
+    pure $ c.val.toNat.toUInt8 - 'A'.val.toNat.toUInt8 + 10 
+  else throw "invalid hex character" 
 
-abbrev String.decodeBase64 := Base64.decode
-abbrev String.encodeBase64 := Base64.encode
-abbrev String.decodeBase64FileName := Base64.decodeFileName
-abbrev String.encodeBase64FileName := Base64.encodeFileName
+def decode (s : String) : Except String String := do
+  let mut it := s.iter
+  let mut arr := ByteArray.empty
+  while not it.atEnd do
+    let c := it.curr
+    if c = '+' then
+      arr := arr.push (' '.toNat.toUInt8)
+    else if c = '%' then
+      it := it.next
+      let a := it.curr
+      it := it.next
+      let b := it.curr
+      if it.atEnd then throw ""
+      arr := arr.push ((← hexChar a) * 16 + (← hexChar b))
+    else
+      arr := arr ++ c.toString.toUTF8
+    it := it.next
+  pure (String.fromUTF8Unchecked arr)
+
+end Html
+
+abbrev String.decodeBase64URI := Base64URI.decode
+abbrev String.encodeBase64URI := Base64URI.encode
+abbrev String.decodeHtml := Html.decode

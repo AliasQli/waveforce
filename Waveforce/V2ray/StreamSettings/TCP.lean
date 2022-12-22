@@ -13,6 +13,9 @@ inductive HeaderType where
 
 open HeaderType
 
+instance : Inhabited HeaderType where
+  default := HeaderType.none
+
 instance : ToString HeaderType where
   toString
     | HeaderType.none => "none"
@@ -35,6 +38,9 @@ structure TCP where
   deriving Repr
 
 namespace TCP
+
+instance : Inhabited TCP where
+  default := ⟨some default⟩
 
 instance : ToJson TCP where
   toJson tcp := mkObj $

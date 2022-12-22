@@ -17,6 +17,9 @@ structure TLSSettings where
 
 namespace TLSSettings
 
+instance : Inhabited TLSSettings where
+  default := ⟨none, some true⟩
+
 instance : ToJson TLSSettings where
   toJson tls := mkObj $
     opt "serverName" tls.serverName ++
@@ -47,6 +50,9 @@ inductive Network where
   deriving Repr
 
 namespace Network
+
+instance : Inhabited Network where
+  default := tcp default
 
 def allOptions := ["tcp", "kcp", "ws", "http"]
 
@@ -97,6 +103,9 @@ structure StreamSettings where
   deriving Repr
 
 namespace StreamSettings
+
+instance : Inhabited StreamSettings where
+  default := ⟨default, some default⟩
 
 instance : ToJson StreamSettings where
   toJson stream := mergeObj (toJson stream.network) $ mkObj $

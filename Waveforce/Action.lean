@@ -49,7 +49,10 @@ def renameSub (i : Nat) (name : String) : IO Unit :=
   Config.modify $ pure ∘ fun c => { c with subscriptions[i].name := name }
 
 def removeSub (s : String) : IO Unit := Config.modify fun c => do
-  if let some ⟨_, c⟩ := c.findSub s then
+  if let some ⟨sub, c⟩ := c.findSub s then
+    try
+      IO.FS.removeFile (Paths.subCachePath sub.url)
+    catch _ => pure ()
     pure c
   else throw (IO.userError s!"No subscription found with index or name {s}.")
 

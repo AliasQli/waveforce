@@ -153,3 +153,4 @@ def Array.findFinIdx? (as : Array α) (p : α → Bool) : Option (Fin as.size) :
   match h : as.findIdx? p with
     | none => none
     | some i => some ⟨i, Array.findIdx?_res_lt_size as p h⟩
+

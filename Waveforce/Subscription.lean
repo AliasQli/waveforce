@@ -30,7 +30,7 @@ namespace Subscripted
 instance [Monad M] : Monad (WriterT String M) := WriterT.monad "" (· ++ ·)
 
 def parseBase64 (s : String) : Subscripted × String := Id.run $ WriterT.run do
-  let s := s.decodeBase64
+  let s := s.decodeBase64URI
   let uris := (s.split (· == '\n')).filter (· != "")
   let mut servers : Array V2ray.Server := #[]
   for uri in uris do
