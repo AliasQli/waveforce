@@ -72,15 +72,10 @@ instance [BEq a] [BEq b] : BEq (Except a b) where
 
 end Except
 
-unsafe def undefined : α :=
-  match unsafeIO (IO.Process.exit 114514) with
-  | Except.ok x => x
-  | Except.error _ => undefined -- Impossible!
-
 unsafe def IO.lazy' (m : IO a) : IO (Thunk a) := pure $ Thunk.mk fun _ => 
   match unsafeIO m with
     | Except.ok x => x
-    | Except.error e => @panic a ⟨undefined⟩ e.toString
+    | Except.error e => unsafeCast (panic $ "Uncaught exception: " ++ e.toString : Nat)
 
 @[implemented_by IO.lazy']
 def IO.lazy (m : IO a) : IO (Thunk a) := m.map (Thunk.mk ∘ (fun _ => ·))
@@ -119,6 +114,12 @@ unsafe def writeBack' (p : FilePath) (t : Thunk (Option String)) : IO Unit := do
 def writeBack (p : FilePath) (t : Thunk (Option String)) : IO Unit := do
   if let some s := t.get then
       createAndWrite p s
+
+unsafe def forceWriteBack' (p : FilePath) : IO Unit := do
+  fileReadRecord.modify (fun m => m.insert p "")
+
+@[implemented_by forceWriteBack']
+def forceWriteBack (_ : FilePath) : IO Unit := pure ()
 
 end IO.FS
 

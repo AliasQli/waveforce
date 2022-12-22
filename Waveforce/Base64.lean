@@ -12,7 +12,7 @@ def decodeTable : Array UInt32 := Id.run do
 
 def decode (s : String) : String := Id.run do
   let s := s.dropRightWhile (· == '=')
-  let pad := min 2 ((4 - s.length) % 4)
+  let pad := min 2 ((4 - s.length % 4) % 4)
   let s := s ++ (List.replicate pad 'A').asString
   let mut it := s.iter
   let mut arr := ByteArray.empty
@@ -36,7 +36,7 @@ def encodeTable : Array Char := ⟨base64Str.data⟩
 
 def encode (r : String) : String := Id.run do
   let arr := r.toUTF8
-  let pad := (3 - arr.size) % 3
+  let pad := (3 - arr.size % 3) % 3
   let arr := arr ++ ⟨⟨List.replicate pad 0⟩⟩
   let mut s := ""
   let mut quadSum := 0

@@ -20,6 +20,12 @@
     "name": "doc-gen4",
     "inputRev?": "main"}},
   {"git":
+   {"url": "https://github.com/xubaiw/BaseN.lean",
+    "subDir?": null,
+    "rev": "0651361bab3df4de990e62eda0517b820c4ccdf3",
+    "name": "BaseN",
+    "inputRev?": "main"}},
+  {"git":
    {"url": "https://github.com/mhuisi/lean4-cli",
     "subDir?": null,
     "rev": "5a858c32963b6b19be0d477a30a1f4b6c120be7e",

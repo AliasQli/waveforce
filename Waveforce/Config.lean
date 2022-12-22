@@ -37,15 +37,32 @@ instance : FromJson Config where
 
 def getPath (config : Config) : FilePath := config.path.getD "v2ray"
 
-def findServerIx (s : String) (c : Config) : Option (Fin c.servers.size) := do
+def findSubIx (s : String) (c : Config) : Option (Fin c.subscriptions.size) := do
   if let some i := s.toNat? then 
-    if h : i < c.servers.size then
+    if h : i < c.subscriptions.size then
       return ⟨i, h⟩
-  c.servers.findFinIdx? (fun server => server.name == s)
+  c.subscriptions.findFinIdx? (fun sub => sub.name == s)
 
-def findServer (s : String) (c : Config) : Option V2ray.Server := do
-  let i ← findServerIx s c
-  pure c.servers[i]
+def findSub (s : String) (c : Config) : Option (V2ray.Subscription × Config) := do
+  let i ← findSubIx s c
+  pure ⟨c.subscriptions[i], {c with subscriptions := c.subscriptions.eraseIdx i}⟩
+
+def findServer (s : String) (c : Config) : Option (V2ray.Server × Config) := do
+  let ss := s.split (· == '.')
+  if let [i, j] := ss then
+    if let some i := c.findSubIx i then
+      if let some sub := c.subscriptions[i].subscripted.get then
+        if let some j := j.toNat? then
+          if h : j < sub.servers.size then
+            return ⟨sub.servers[j], {c with subscriptions[i].subscripted := Thunk.pure (some {sub with servers := sub.servers.eraseIdx j})}⟩
+        if let some j := sub.servers.findFinIdx? (fun server => server.name == s) then
+          return ⟨sub.servers[j], {c with subscriptions[i].subscripted := Thunk.pure (some {sub with servers := sub.servers.eraseIdx j})}⟩
+  if let some i := s.toNat? then
+    if h : i < c.servers.size then
+      return ⟨c.servers[i], {c with servers := c.servers.eraseIdx i}⟩
+  if let some i := c.servers.findFinIdx? (fun server => server.name == s) then
+    return ⟨c.servers[i], {c with servers := c.servers.eraseIdx i}⟩
+  none
 
 def read : IO Config := do
   let s ← try
@@ -62,7 +79,7 @@ def read : IO Config := do
       let subed ← try
                 IO.ofExcept (do fromJson? (← parse s))
               catch e => do
-                println! s!"Failed to parse subscription {sub.url}'s cache file {path}, try deleting it:"
+                println! "Failed to parse subscription {sub.url}'s cache file {path}, try deleting it:"
                 throw e
       pure (some subed)
     config := {config with subscriptions[i].subscripted := subed}

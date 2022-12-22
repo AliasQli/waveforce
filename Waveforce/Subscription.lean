@@ -51,7 +51,7 @@ structure Subscription where
 open Std.Format in
 instance : Repr Subscription where
   reprPrec sub _ := 
-    "{ name := " ++ text sub.name ++ ", url := " ++ text sub.url ++ "subscripted := ... }"
+    "{ name := " ++ text sub.name ++ ", url := " ++ text sub.url ++ ", subscripted := ... }"
 
 instance : ToJson Subscription where
   toJson sub := mkObj 
