@@ -89,6 +89,7 @@ def killV2ray : IO Unit :=
 
 def runV2ray (p : System.FilePath) (s : V2ray.Server) (wait : Bool) : IO Unit := do
   s.render
+  println! "Use server {s.protocol.getAddress}."
   if wait then do
     let child ← spawn 
       { cmd := p.toString.replace "~" Paths.homeDir.toString
