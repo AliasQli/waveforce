@@ -2,6 +2,7 @@ import Waveforce.V2ray.StreamSettings.MKCP
 import Waveforce.V2ray.StreamSettings.WebSocket
 import Waveforce.V2ray.StreamSettings.TCP
 import Waveforce.V2ray.StreamSettings.HTTP2
+import Waveforce.V2ray.StreamSettings.QUIC
 import Waveforce.Util
 
 open Lean Json Except
@@ -47,6 +48,7 @@ inductive Network where
   | mKCP : MKCP → Network
   | websocket : WebSocket → Network
   | http2 : HTTP2 → Network
+  | quic : QUIC → Network
   deriving Repr
 
 namespace Network
@@ -54,7 +56,7 @@ namespace Network
 instance : Inhabited Network where
   default := tcp default
 
-def allOptions := ["tcp", "kcp", "ws", "http"]
+def allOptions := ["tcp", "kcp", "ws", "http", "quic"]
 
 instance : ToJson Network where
   toJson
@@ -74,6 +76,10 @@ instance : ToJson Network where
       [ ⟨"network", str "http"⟩
       , ⟨"httpSettings", toJson h2⟩
       ]
+    | quic q => mkObj
+      [ ⟨"network", str "quic"⟩
+      , ⟨"quicSettings", toJson q⟩
+      ]
 
 instance : FromJson Network where
   fromJson? obj := do
@@ -82,6 +88,7 @@ instance : FromJson Network where
       | "kcp" => (fromJson? (← obj.getObjVal? "kcpSettings")).map mKCP
       | "ws" => (fromJson? (← obj.getObjVal? "wsSettings")).map websocket
       | "http" => (fromJson? (← obj.getObjVal? "httpSettings")).map http2
+      | "quic" => (fromJson? (← obj.getObjVal? "quicSettings")).map quic
       | s => throw s!"Unrecognized network type {s}, expected one of {allOptions}."
 
 instance : FromJsonURI Network where
@@ -91,6 +98,8 @@ instance : FromJsonURI Network where
       | "kcp" => (fromJsonURI? scheme params).map mKCP
       | "ws" => (fromJsonURI? scheme params).map websocket
       | "http" => (fromJsonURI? scheme params).map http2
+      | "h2" => (fromJsonURI? scheme params).map http2
+      | "quic" => (fromJsonURI? scheme params).map quic
       | s => throw s!"Unrecognized network type {s}, expected one of {allOptions}."
 
 end Network
@@ -125,7 +134,7 @@ instance : FromJson StreamSettings where
 
 instance : FromJsonURI StreamSettings where
   fromJsonURI? scheme params := do
-    let tls ← if params.getObjValAs? String "tls" == pure "tls" 
+    let tls ← if params.getObjValAs? String "tls" == pure "tls"
               || params.getObjValAs? Bool "tls" == pure true
           then pure $ some (← fromJsonURI? scheme params)
           else pure none

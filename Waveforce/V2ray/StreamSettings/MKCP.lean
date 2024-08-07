@@ -52,6 +52,7 @@ structure MKCP where
   congestion : Option Bool
   readBufferSize : Option UInt16
   writeBufferSize : Option UInt16
+  seed : Option String
   headerType : Option MKCP.HeaderType
   deriving Repr
 
@@ -66,6 +67,7 @@ instance : ToJson MKCP where
     opt "congestion" mkcp.congestion ++
     opt "readBufferSize" mkcp.readBufferSize ++
     opt "writeBufferSize" mkcp.writeBufferSize ++
+    opt "seed" mkcp.seed ++
     mkcp.headerType.toList.map (⟨"header", mkObj [⟨"type", toJson ·⟩]⟩)
 
 instance : FromJson MKCP where
@@ -78,6 +80,7 @@ instance : FromJson MKCP where
       , congestion := (obj.getObjValAs? Bool "congestion").toOption
       , readBufferSize := (obj.getObjValAs? UInt16 "readBufferSize").toOption
       , writeBufferSize := (obj.getObjValAs? UInt16 "writeBufferSize").toOption
+      , seed := (obj.getObjValAs? String "seed").toOption
       , headerType := (do (← obj.getObjVal? "header").getObjValAs? HeaderType "type").toOption
       : MKCP
       }
@@ -92,6 +95,7 @@ instance : FromJsonURI MKCP where
       , congestion := some false
       , readBufferSize := none
       , writeBufferSize := none
+      , seed := (params.getObjValAs? String "path").toOption
       , headerType := (params.getObjValAs? HeaderType "type").toOption
       : MKCP
       }

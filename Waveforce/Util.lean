@@ -1,5 +1,5 @@
 import Lean.Data.Json
-import Std.Data.Option.Basic
+import Batteries.Data.Option
 import Init.System.FilePath
 import Mathlib.Data.Option.Basic
 
@@ -8,7 +8,7 @@ open Lean System
 namespace V2ray
 
 class FromJsonURI (α : Type u) where
-  fromJsonURI? : String → Json → Except String α
+  fromJsonURI? : (protocol : String) → Json → Except String α
 
 export FromJsonURI (fromJsonURI?)
 
@@ -72,7 +72,7 @@ instance [BEq a] [BEq b] : BEq (Except a b) where
 
 end Except
 
-unsafe def IO.lazy' (m : IO a) : IO (Thunk a) := pure $ Thunk.mk fun _ => 
+unsafe def IO.lazy' (m : IO a) : IO (Thunk a) := pure $ Thunk.mk fun _ =>
   match unsafeIO m with
     | Except.ok x => x
     | Except.error e => unsafeCast (panic $ "Uncaught exception: " ++ e.toString : Nat)
@@ -123,34 +123,26 @@ def forceWriteBack (_ : FilePath) : IO Unit := pure ()
 
 end IO.FS
 
-theorem Array.findIdx?_res_lt_size (as : Array α) (p : α → Bool) : 
+theorem Array.findIdx?_res_lt_size (as : Array α) (p : α → Bool) :
     as.findIdx? p = some n → n < as.size := by
-  let rec prf (i : Nat) (j : Nat) (inv : i + j = as.size) : 
-      Array.findIdx?.loop as p i j inv = some n → n < as.size := by
+  let rec prf (i : Nat) :
+      Array.findIdx?.loop as p i = some n → n < as.size := by
     intro h
     rw [Array.findIdx?.loop] at h
     split at h
-    case inl hlt =>
+    case isTrue i_lt_size =>
       split at h
-      case h_1 inv =>
-        rw [Nat.zero_add] at inv
-        rw [inv] at hlt
-        exact absurd hlt (Nat.lt_irrefl _)
-      case h_2 i inv =>
-        split at h
-        case inl =>
-          rw [← Option.some_injective Nat h]
-          exact hlt
-        case inr =>
-          have : i + (j + 1) = as.size := by
-            rw [← inv, Nat.add_comm j 1, Nat.add_assoc]
-          exact prf i (j + 1) this h
-    case inr => contradiction
+      case isTrue =>
+        simp at h
+        rw [h] at i_lt_size
+        exact i_lt_size
+      case isFalse =>
+        exact prf (i + 1) h
+    case isFalse => contradiction
   rw [Array.findIdx?]
-  exact prf as.size 0 rfl
+  exact prf 0
 
-def Array.findFinIdx? (as : Array α) (p : α → Bool) : Option (Fin as.size) := 
+def Array.findFinIdx? (as : Array α) (p : α → Bool) : Option (Fin as.size) :=
   match h : as.findIdx? p with
     | none => none
     | some i => some ⟨i, Array.findIdx?_res_lt_size as p h⟩
-

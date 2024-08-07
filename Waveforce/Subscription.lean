@@ -3,7 +3,7 @@ import Waveforce.V2ray
 import Waveforce.Paths
 import Init.System.FilePath
 import Init.System.IO
-import Mathlib.Control.Writer
+import Mathlib.Control.Monad.Writer
 
 open Lean Json System
 
@@ -50,12 +50,12 @@ structure Subscription where
 
 open Std.Format in
 instance : Repr Subscription where
-  reprPrec sub _ := 
+  reprPrec sub _ :=
     "{ name := " ++ text sub.name ++ ", url := " ++ text sub.url ++ ", subscripted := ... }"
 
 instance : ToJson Subscription where
-  toJson sub := mkObj 
-    [ ⟨"name", str sub.name⟩ 
+  toJson sub := mkObj
+    [ ⟨"name", str sub.name⟩
     , ⟨"url", str sub.url⟩
     ]
 

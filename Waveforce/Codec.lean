@@ -31,7 +31,7 @@ def decode (s : String) : String := Id.run do
       arr := arr.append ⟨#[a, b, c]⟩
       n := 0
     it := it.next
-  pure $ (String.fromUTF8Unchecked arr).dropRight pad
+  pure $ (String.fromUTF8! arr).dropRight pad
 
 def encodeTable : Array Char := ⟨base64Str.data⟩
 
@@ -62,13 +62,13 @@ end Base64URI
 namespace Html
 
 def hexChar (c : Char) : Except String UInt8 :=
-  if '0' ≤ c ∧ c ≤ '9' then 
-    pure $ c.val.toNat.toUInt8 - '0'.val.toNat.toUInt8 
-  else if 'a' ≤ c ∧ c ≤ 'f' then 
-    pure $ c.val.toNat.toUInt8 - 'a'.val.toNat.toUInt8 + 10 
-  else if 'A' ≤ c ∧ c ≤ 'F' then 
-    pure $ c.val.toNat.toUInt8 - 'A'.val.toNat.toUInt8 + 10 
-  else throw "invalid hex character" 
+  if '0' ≤ c ∧ c ≤ '9' then
+    pure $ c.val.toNat.toUInt8 - '0'.val.toNat.toUInt8
+  else if 'a' ≤ c ∧ c ≤ 'f' then
+    pure $ c.val.toNat.toUInt8 - 'a'.val.toNat.toUInt8 + 10
+  else if 'A' ≤ c ∧ c ≤ 'F' then
+    pure $ c.val.toNat.toUInt8 - 'A'.val.toNat.toUInt8 + 10
+  else throw "invalid hex character"
 
 def decode (s : String) : Except String String := do
   let mut it := s.iter
@@ -87,7 +87,7 @@ def decode (s : String) : Except String String := do
     else
       arr := arr ++ c.toString.toUTF8
     it := it.next
-  pure (String.fromUTF8Unchecked arr)
+  pure (String.fromUTF8! arr)
 
 end Html
 

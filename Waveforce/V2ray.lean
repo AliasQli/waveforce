@@ -17,7 +17,7 @@ structure Server where
   deriving Repr
 
 instance : ToJson Server where
-  toJson server := mergeObj (toJson server.protocol) $ mkObj $ 
+  toJson server := mergeObj (toJson server.protocol) $ mkObj $
     [⟨"streamSettings", toJson server.stream⟩] ++
     opt "name" server.name
 
@@ -43,7 +43,7 @@ instance : FromJsonURI Server where
       }
 
 def parseURItoJson : String → Except String Json := Parsec.run do
-  let htmlString := Parsec.many1Chars $ 
+  let htmlString := Parsec.many1Chars $
     Parsec.satisfy ("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_./".contains ·)
   -- Tag
   let mut obj : List (String × Json) := [⟨"from_uri", bool true⟩]
@@ -69,7 +69,7 @@ def parseURItoJson : String → Except String Json := Parsec.run do
       pure ⟨attr, val⟩
 
     obj := obj ++ arr.data
-  
+
   if (← Parsec.peek?) = some '#' then
     Parsec.skipChar '#'
     match (← Parsec.many1Chars Parsec.anyChar).decodeHtml with
@@ -83,12 +83,22 @@ def fromBase64URI? (uri : String) : Except String Server := do
   if ss.length != 2 then throw "Malformed URI."
   let scheme := ss[0]!
   let body := ss[1]!
-  let obj ← try
-    parse body.decodeBase64URI
-  catch e => do
-    if !body.contains '@' then throw e
-    parseURItoJson body
-  fromJsonURI? scheme obj
+  match scheme with
+  | "vmess" =>
+    let obj ← try
+      parse body.decodeBase64URI
+    catch e => do
+      if !body.contains '@' then throw e
+      parseURItoJson body
+    fromJsonURI? scheme obj
+  -- | "trojan" =>
+  --   let obj ← try
+  --     parse body.decodeBase64URI
+  --   catch e => do
+  --     if !body.contains '@' then throw e
+  --     parseURItoJson body
+  --   fromJsonURI? scheme obj
+  | _ => Except.error s!"scheme {scheme} invalid or not supported"
 
 -- TODO
 def Server.toConfigString (server : Server) : String := ((toJson server).compress.drop 1).dropRight 1
@@ -165,7 +175,7 @@ def renderTo (s : String) (path : FilePath) : IO Unit := do
 end Template
 
 
-def Server.render (s : Server) (path : optParam FilePath Paths.v2rayConfigPath) := 
+def Server.render (s : Server) (path : optParam FilePath Paths.v2rayConfigPath) :=
   Template.renderTo s.toConfigString path
 
 end V2ray
